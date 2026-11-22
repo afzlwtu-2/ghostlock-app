@@ -156,25 +156,30 @@ data class NativeProfileDocument(
         routeSection()?.let(::add)
     }
 
-    private fun taskEntries(): List<Pair<String, ULong>> = listOf(
-        "prio" to taskStruct.prio.toULong(),
-        "normal_prio" to taskStruct.normalPrio.toULong(),
-        "sched_task_group" to taskStruct.schedTaskGroup.toULong(),
-        "pi_lock" to taskStruct.piLock.toULong(),
-        "pi_waiters" to taskStruct.piWaiters.toULong(),
-        "pi_top_task" to taskStruct.piTopTask.toULong(),
-        "pi_blocked_on" to taskStruct.piBlockedOn.toULong(),
-        "pid" to taskStruct.pid.toULong(),
-        "tgid" to taskStruct.tgid.toULong(),
-        "atomic_flags" to taskStruct.atomicFlags.toULong(),
-        "real_cred" to taskStruct.realCred.toULong(),
-        "cred" to taskStruct.cred.toULong(),
-        "comm" to taskStruct.comm.toULong(),
-        "tasks" to taskStruct.tasks.toULong(),
-        "seccomp" to taskStruct.seccomp.toULong(),
-        "usage" to taskStruct.usage.toULong(),
-        "thread_info_size" to taskStruct.threadInfoSize.toULong(),
-    )
+    private fun taskEntries(): List<Pair<String, ULong>> = buildList {
+        add("prio" to taskStruct.prio.toULong())
+        add("normal_prio" to taskStruct.normalPrio.toULong())
+        add("sched_task_group" to taskStruct.schedTaskGroup.toULong())
+        add("pi_lock" to taskStruct.piLock.toULong())
+        add("pi_waiters" to taskStruct.piWaiters.toULong())
+        add("pi_top_task" to taskStruct.piTopTask.toULong())
+        add("pi_blocked_on" to taskStruct.piBlockedOn.toULong())
+        add("pid" to taskStruct.pid.toULong())
+        add("tgid" to taskStruct.tgid.toULong())
+        add("atomic_flags" to taskStruct.atomicFlags.toULong())
+        add("real_cred" to taskStruct.realCred.toULong())
+        add("cred" to taskStruct.cred.toULong())
+        add("comm" to taskStruct.comm.toULong())
+        add("tasks" to taskStruct.tasks.toULong())
+        add("seccomp" to taskStruct.seccomp.toULong())
+        /* 0 = absent (legacy fallback). Omit the keys when absent so profiles
+         * that do not override them keep the pre-refactor wire bytes exactly;
+         * presence is carried by key occurrence, matching native `kTask`. */
+        if (taskStruct.usage != 0u) add("usage" to taskStruct.usage.toULong())
+        if (taskStruct.threadInfoSize != 0u) {
+            add("thread_info_size" to taskStruct.threadInfoSize.toULong())
+        }
+    }
 
     private fun credEntries(): List<Pair<String, ULong>> = listOf(
         "copy_size" to cred.copySize.toULong(),

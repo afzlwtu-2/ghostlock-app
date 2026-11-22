@@ -145,6 +145,36 @@ class NativeProfileDocumentTest {
     }
 
     @Test
+    fun `task usage and thread_info_size are omitted when absent`() {
+        /* 0 / null means legacy fallback: the keys must not appear, so profiles
+         * that do not override them keep the pre-refactor wire bytes exactly. */
+        val bytes = doc("multicast_waiter").toBinary()
+        val task = entriesOf(bytes, "task_struct")
+        assertTrue(task.none { it.first == "usage" })
+        assertTrue(task.none { it.first == "thread_info_size" })
+        val decoded = NativeProfileDocument.fromBinary(bytes)!!
+        assertEquals(0u, decoded.taskStruct.usage)
+        assertEquals(0u, decoded.taskStruct.threadInfoSize)
+    }
+
+    @Test
+    fun `task usage and thread_info_size are emitted when present and round trip`() {
+        val bytes = doc(
+            "multicast_waiter",
+            mapOf("task_struct.usage" to 56L, "task_struct.thread_info_size" to 40L),
+        ).toBinary()
+        val task = entriesOf(bytes, "task_struct")
+        assertEquals(56L, task.toMap()["usage"])
+        assertEquals(40L, task.toMap()["thread_info_size"])
+        /* Same trailing order as native `kTask`, so the two serializers agree. */
+        assertEquals(listOf("usage", "thread_info_size"), task.map { it.first }.takeLast(2))
+        val decoded = NativeProfileDocument.fromBinary(bytes)!!
+        assertEquals(56u, decoded.taskStruct.usage)
+        assertEquals(40u, decoded.taskStruct.threadInfoSize)
+        assertTrue(bytes.contentEquals(decoded.toBinary()))
+    }
+
+    @Test
     fun `signed values keep their two's complement bits`() {
         val bytes = doc("select_stack", mapOf("pselect_waiter_shift" to -2L)).toBinary()
         assertEquals(-2L, entriesOf(bytes, "route.select_stack").toMap()["waiter_shift"]!!)
